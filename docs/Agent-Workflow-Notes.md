@@ -28,3 +28,5 @@ feature `edition2024` is required
 ```
 
 `rustup toolchain install 1.90.0` then `cargo +1.90.0 check --manifest-path src-tauri/Cargo.toml` typechecks. `cargo +1.90.0 fmt --manifest-path src-tauri/Cargo.toml -- --check` passes. Installing `libgtk-3-dev` and `libwebkit2gtk-4.1-dev` still exits 1 on the `fuse3` `/etc/fuse.conf` prompt. Those -dev packages were configured anyway, and the 1.90 check then succeeded.
+
+After the Main Wojak / Wojakland folder rename, the Windows clone kept uncommitted edits in `AGENTS.md`, `README.md`, `docs/architecture.md`, and `src-tauri/src/models.rs`. Those edits matched commit `5e18703`, which was already on origin. `git pull` of later main (`7b360f6`) failed because those four paths were dirty. Discard the matching local edits with `git checkout --` on those four paths, then `git pull`. Commit default-root renames to main. Do not leave them only as local PC patches.
