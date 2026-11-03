@@ -69,3 +69,39 @@ Generate a thumbnail the first time the image appears in the grid. Cache that fi
 - Do not write into the library tree. The app does not copy, move, or own the binaries, and it does not drop cache files beside them.
 - Regenerate thumbnails safely inside the Tauri app-local cache. Rebuilding a thumb replaces or recreates that cache file only.
 - Do not keep the index current with a routine re-scan. There is no launch auto-scan and no folder watcher in this cut. New files are indexed only when the owner explicitly refreshes or imports. A rename, move, or delete on disk does not automatically delete the row or move favorites, tags, or `display_name`.
+
+## UI
+
+Intended. Not implemented. The window below is part of the locked target, not a built screen.
+
+### Visual system
+
+Use 98.css from npm: https://jdan.github.io/98.css/
+
+Win98 chrome is semantic HTML and 98.css classes. Custom CSS is only for grid and layout gaps that 98.css does not cover.
+
+### Chrome
+
+One primary Win98 window fills the Tauri frame. It has a title bar, a toolbar, a body, and a status bar.
+
+Title-bar Minimize, Maximize/Restore, and Close call the real Tauri window APIs.
+
+### Body
+
+The body layout is a search and filter toolbar at the top, then a scrollable thumbnail grid. Selecting a thumbnail opens a detail pane on the right. The pane shows a preview, the name, favorite, and tags.
+
+### Toolbar
+
+- Search box
+- Favorites-only toggle
+- Hide-missing toggle
+- Refresh
+
+Hide-missing is the show-or-hide choice in Missing files. Refresh is the explicit owner Refresh in Scan policy.
+
+### Status bar
+
+- Visible count
+- Total indexed
+- Favorites count
+- Selected display name or path
