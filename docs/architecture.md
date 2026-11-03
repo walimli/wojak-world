@@ -1,6 +1,6 @@
 # Architecture
 
-**Status: intended. Not yet implemented.** This repo has no application code yet. The sections below are the locked target, not a description of a running app.
+**Status: implemented.** This is the first cut: a Windows Tauri 2 app. The sections below are the locked behavior.
 
 Repo: https://github.com/walimli/wojak-world
 
@@ -21,7 +21,7 @@ Default roots:
 - `C:\Users\William\Wojak-World\All Wojaks`
 - `C:\Users\William\Wojak-World\Wojakland Archive`
 
-Settings may override those roots.
+Settings may override those roots. The Settings button edits the list. Saving does not scan. Refresh indexes the saved folders.
 
 The app indexes files in place. It never copies, moves, or owns the image binaries. The library is about 18.5k images, mostly PNG, in flat folder trees.
 
@@ -33,16 +33,18 @@ Favorites, tags, and an optional `display_name` are app metadata. They can chang
 
 A real filesystem rename or move does not auto-carry that metadata. The new location is a different path, so it is a different record. Favorites, tags, and `display_name` stay on the old path.
 
-## Schema sketch
+## Schema
 
-High level and intended only. This is not a migration and not a final column list.
+SQLite file: `library.sqlite` in Tauri app-local data. Migration is `PRAGMA user_version` 1 in `src-tauri/src/db.rs`.
 
-- `images`: `path` primary key, `basename`, `folder`, `extension`, `size`, `mtime`, `favorite`, `display_name`, a missing flag, and the other index fields this cut needs.
+- `images`: `path` primary key, `basename`, `folder`, `extension`, `size`, `mtime`, `favorite`, `display_name`, `missing`, `indexed_at`.
 - `tags` and `image_tags`: ordinary tables. Tags are not stored only inside the image row.
-- SQLite FTS5 over `basename` and tags. Derived filename tokens feed FTS. Tags remain the normal tables above. FTS is the search index, not the source of truth for tags.
-- Thumbnail metadata points at cache files in Tauri app-local data.
+- `image_tokens` and `image_categories`: derived filename tokens, filename phrases, and the parent folder name. They are search input. This cut has no separate taxonomy editor. The detail pane shows categories as read-only suggested text.
+- `image_search` plus FTS5 `image_fts` over basename, derived tokens, tags, and `display_name`. Tags remain the normal tables above. FTS is the search index, not the source of truth for tags. `display_name` is indexed so a renamed image can be found.
+- `thumbnails`: cache file name, pixel size, and the source `mtime` and `size` the file was built from.
+- `settings`: `roots` JSON and `setup_complete`.
 
-Derived filename tokens are search input. This cut has no separate taxonomy editor.
+Thumbnail files are `{sha256 of path}.jpg` under `thumbs/` in that same app-local directory.
 
 ## Scan policy
 
@@ -62,7 +64,9 @@ A filesystem rename or move is not applied onto the old row. The old path can re
 
 ## Thumbnails
 
-Generate a thumbnail the first time the image appears in the grid. Cache that file in Tauri app-local data only. Never write thumbnails, sidecars, or a cache directory into Wojak-World.
+Generate a thumbnail the first time the image appears in the grid. The grid only mounts visible cells, and each cell asks for its thumb then. Cache that file in Tauri app-local data only. Never write thumbnails, sidecars, or a cache directory into Wojak-World.
+
+The webview loads thumbs and the detail preview from the `wojak` scheme (`http://wojak.localhost/...` on Windows). The handler serves a path only when that path is already in `images`.
 
 ## Boundaries
 
@@ -72,7 +76,7 @@ Generate a thumbnail the first time the image appears in the grid. Cache that fi
 
 ## UI
 
-Intended. Not implemented. The window below is part of the locked target, not a built screen.
+Implemented. The window below is the built screen.
 
 ### Visual system
 
@@ -96,8 +100,9 @@ The body layout is a search and filter toolbar at the top, then a scrollable thu
 - Favorites-only toggle
 - Hide-missing toggle
 - Refresh
+- Settings, for the library roots override
 
-Hide-missing is the show-or-hide choice in Missing files. Refresh is the explicit owner Refresh in Scan policy.
+Hide-missing is the show-or-hide choice in Missing files. It starts checked. Refresh is the explicit owner Refresh in Scan policy. This cut's import is Refresh after the roots are saved. There is no second import command and no folder watcher.
 
 ### Status bar
 
@@ -105,3 +110,16 @@ Hide-missing is the show-or-hide choice in Missing files. Refresh is the explici
 - Total indexed
 - Favorites count
 - Selected display name or path
+
+## File layout
+
+- `src/` Preact UI. `styles.css` is only the grid, the panes, and the full-frame layout. Chrome classes come from the `98.css` package.
+- `src-tauri/src/lib.rs` Tauri setup, the `wojak` scheme, and commands.
+- `src-tauri/src/db.rs` schema, migration, favorites, tags, and `display_name`.
+- `src-tauri/src/scan.rs` setup index and Refresh. Read-only on the library.
+- `src-tauri/src/search.rs` FTS query.
+- `src-tauri/src/tokens.rs` filename tokens and suggested categories.
+- `src-tauri/src/thumbs.rs` JPEG thumbs in app-local data.
+- `src-tauri/capabilities/default.json` window permissions for Minimize, Maximize/Restore, Close, and dragging the title bar.
+
+The frame is one undecorated Tauri window. The HTML title bar is the window chrome.
