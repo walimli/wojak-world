@@ -15,4 +15,4 @@ npm run tauri dev
 
 `npm run tauri build` writes an NSIS installer under `src-tauri\target\release\bundle\nsis\`.
 
-The first launch asks to index the library folders. The defaults are `C:\Users\William\Wojak-World\All Wojaks` and `C:\Users\William\Wojak-World\Wojakland Archive`. The app does not scan on later launches. Press Refresh to pick up new files. SQLite and thumbnails stay in the Tauri app-local data directory, not in the library.
+The first launch asks to index the library folders. The defaults are `C:\Users\William\Wojak-World\Main Wojak` and `C:\Users\William\Wojak-World\Wojakland`. The app does not scan on later launches. Press Refresh to pick up new files. SQLite and thumbnails stay in the Tauri app-local data directory, not in the library.

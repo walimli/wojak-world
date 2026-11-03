@@ -18,8 +18,8 @@ SQLite and the thumbnail cache both live in Tauri app-local data. Neither is in 
 
 Default roots:
 
-- `C:\Users\William\Wojak-World\All Wojaks`
-- `C:\Users\William\Wojak-World\Wojakland Archive`
+- `C:\Users\William\Wojak-World\Main Wojak`
+- `C:\Users\William\Wojak-World\Wojakland`
 
 Settings may override those roots. The Settings button edits the list. Saving does not scan. Refresh indexes the saved folders.
 

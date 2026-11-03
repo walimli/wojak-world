@@ -52,7 +52,7 @@ pub struct SearchResponse {
 
 pub fn default_roots() -> Vec<String> {
     vec![
-        r"C:\Users\William\Wojak-World\All Wojaks".to_string(),
-        r"C:\Users\William\Wojak-World\Wojakland Archive".to_string(),
+        r"C:\Users\William\Wojak-World\Main Wojak".to_string(),
+        r"C:\Users\William\Wojak-World\Wojakland".to_string(),
     ]
 }

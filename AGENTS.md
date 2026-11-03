@@ -4,7 +4,7 @@ Working rules for coding agents. Keep them short and literal.
 
 ## Product
 
-Windows-only Tauri 2 + Preact + Vite desktop app. It indexes a local wojak image library in place under `C:\Users\William\Wojak-World` (All Wojaks + Wojakland Archive). The app never copies, moves, or owns the image binaries.
+Windows-only Tauri 2 + Preact + Vite desktop app. It indexes a local wojak image library in place under `C:\Users\William\Wojak-World` (Main Wojak + Wojakland). The app never copies, moves, or owns the image binaries.
 
 ## Metadata
 
