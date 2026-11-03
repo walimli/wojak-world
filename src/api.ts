@@ -25,9 +25,10 @@ export function refresh(): Promise<ScanReport> {
 export function search(
   query: string,
   favoritesOnly: boolean,
+  taggedOnly: boolean,
   hideMissing: boolean,
 ): Promise<SearchResponse> {
-  return invoke("search", { query, favoritesOnly, hideMissing });
+  return invoke("search", { query, favoritesOnly, taggedOnly, hideMissing });
 }
 
 export function imageDetail(path: string): Promise<ImageDetail> {

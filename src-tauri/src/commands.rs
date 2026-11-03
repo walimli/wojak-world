@@ -49,8 +49,9 @@ pub fn search(
     query: String,
     favorites_only: bool,
     hide_missing: bool,
+    tagged_only: bool,
 ) -> Result<SearchResponse, String> {
-    state.with_db(|conn| search::search(conn, &query, favorites_only, hide_missing))
+    state.with_db(|conn| search::search(conn, &query, favorites_only, hide_missing, tagged_only))
 }
 
 #[tauri::command]

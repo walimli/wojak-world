@@ -1,10 +1,13 @@
 export function Toolbar(props: {
   query: string;
   favoritesOnly: boolean;
+  taggedOnly: boolean;
   hideMissing: boolean;
   busy: boolean;
   onQuery: (query: string) => void;
+  onSearch: () => void;
   onFavoritesOnly: (value: boolean) => void;
+  onTaggedOnly: (value: boolean) => void;
   onHideMissing: (value: boolean) => void;
   onRefresh: () => void;
   onSettings: () => void;
@@ -19,7 +22,16 @@ export function Toolbar(props: {
         value={props.query}
         disabled={props.busy}
         onInput={(event) => props.onQuery(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            props.onSearch();
+          }
+        }}
       />
+      <button type="button" disabled={props.busy} onClick={props.onSearch}>
+        Search
+      </button>
       <input
         id="favorites-only"
         type="checkbox"
@@ -28,6 +40,14 @@ export function Toolbar(props: {
         onChange={(event) => props.onFavoritesOnly(event.currentTarget.checked)}
       />
       <label for="favorites-only">Favorites only</label>
+      <input
+        id="tagged-only"
+        type="checkbox"
+        checked={props.taggedOnly}
+        disabled={props.busy}
+        onChange={(event) => props.onTaggedOnly(event.currentTarget.checked)}
+      />
+      <label for="tagged-only">Tagged only</label>
       <input
         id="hide-missing"
         type="checkbox"

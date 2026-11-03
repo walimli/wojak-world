@@ -9,15 +9,17 @@ pub fn search(
     query: &str,
     favorites_only: bool,
     hide_missing: bool,
+    tagged_only: bool,
 ) -> Result<SearchResponse, String> {
     let (total, favorites) = db::counts(conn)?;
     let items = match tokens::fts_query(query) {
         FtsQuery::All => db::search_filtered(
             conn,
-            "ORDER BY basename COLLATE NOCASE, path",
+            "ORDER BY i.basename COLLATE NOCASE, i.path",
             None,
             favorites_only,
             hide_missing,
+            tagged_only,
         )?,
         FtsQuery::None => Vec::new(),
         FtsQuery::Match(match_query) => db::search_filtered(
@@ -26,6 +28,7 @@ pub fn search(
             Some(&match_query),
             favorites_only,
             hide_missing,
+            tagged_only,
         )?,
     };
     let visible = items.len() as u64;

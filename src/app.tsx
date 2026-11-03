@@ -35,7 +35,9 @@ export function App() {
   const [roots, setRootList] = useState<string[]>([]);
   const [defaultRoots, setDefaultRoots] = useState<string[]>([]);
   const [query, setQuery] = useState("");
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [taggedOnly, setTaggedOnly] = useState(false);
   const [hideMissing, setHideMissing] = useState(true);
   const [result, setResult] = useState<SearchResponse | null>(null);
   const [selectedPath, setSelectedPath] = useState<string | null>(null);
@@ -63,24 +65,40 @@ export function App() {
     };
   }, []);
 
+  function runSearch(
+    nextQuery: string,
+    nextFavorites: boolean,
+    nextTagged: boolean,
+    nextHide: boolean,
+  ) {
+    const id = ++request.current;
+    return search(nextQuery, nextFavorites, nextTagged, nextHide)
+      .then((response) => {
+        if (request.current !== id) return false;
+        setResult(response);
+        setSelectedPath((current) =>
+          current && response.items.some((item) => item.path === current) ? current : null,
+        );
+        return true;
+      })
+      .catch((error) => {
+        if (request.current === id) setMessage(errorText(error));
+        return false;
+      });
+  }
+
   useEffect(() => {
     if (phase.name !== "ready") return;
-    const id = ++request.current;
-    const handle = window.setTimeout(() => {
-      search(query, favoritesOnly, hideMissing)
-        .then((response) => {
-          if (request.current !== id) return;
-          setResult(response);
-          setSelectedPath((current) =>
-            current && response.items.some((item) => item.path === current) ? current : null,
-          );
-        })
-        .catch((error) => {
-          if (request.current === id) setMessage(errorText(error));
-        });
-    }, query.trim() ? 150 : 0);
-    return () => window.clearTimeout(handle);
-  }, [phase, query, favoritesOnly, hideMissing]);
+    void runSearch(submittedQuery, favoritesOnly, taggedOnly, hideMissing);
+  }, [phase, submittedQuery, favoritesOnly, taggedOnly, hideMissing]);
+
+  function onSearch() {
+    if (query === submittedQuery) {
+      void runSearch(query, favoritesOnly, taggedOnly, hideMissing);
+      return;
+    }
+    setSubmittedQuery(query);
+  }
 
   useEffect(() => {
     if (!selectedPath) {
@@ -120,13 +138,8 @@ export function App() {
     setBusy(true);
     try {
       const report = await refresh();
-      const response = await search(query, favoritesOnly, hideMissing);
-      request.current += 1;
-      setResult(response);
-      setSelectedPath((current) =>
-        current && response.items.some((item) => item.path === current) ? current : null,
-      );
-      if (report.errors.length > 0) setMessage(report.errors.join("\n"));
+      const applied = await runSearch(submittedQuery, favoritesOnly, taggedOnly, hideMissing);
+      if (applied && report.errors.length > 0) setMessage(report.errors.join("\n"));
     } catch (error) {
       setMessage(errorText(error));
     } finally {
@@ -191,6 +204,19 @@ export function App() {
     try {
       const stored = await setTags(path, tags);
       setDetail((current) => (current && current.path === path ? { ...current, tags: stored } : current));
+      if (taggedOnly && stored.length === 0) {
+        setResult((current) => {
+          if (!current) return current;
+          const items = current.items.filter((item) => item.path !== path);
+          const removed = items.length !== current.items.length;
+          return {
+            ...current,
+            items,
+            visible: removed ? Math.max(0, current.visible - 1) : current.visible,
+          };
+        });
+        setSelectedPath((current) => (current === path ? null : current));
+      }
     } catch (error) {
       setMessage(errorText(error));
     }
@@ -212,10 +238,13 @@ export function App() {
             <Toolbar
               query={query}
               favoritesOnly={favoritesOnly}
+              taggedOnly={taggedOnly}
               hideMissing={hideMissing}
               busy={busy}
               onQuery={setQuery}
+              onSearch={onSearch}
               onFavoritesOnly={setFavoritesOnly}
+              onTaggedOnly={setTaggedOnly}
               onHideMissing={setHideMissing}
               onRefresh={() => {
                 void onRefresh();

@@ -20,3 +20,11 @@ Tauri's crate graph asks for GTK on Linux even though this app is Windows-only. 
 ```
 
 Browsers already ignore that query. `build.cssMinify: false` in `vite.config.ts` is what makes `npm run build` succeed. Do not turn LightningCSS minify back on for this stylesheet.
+
+Default `cargo check --manifest-path src-tauri/Cargo.toml` also fails on this image before the GTK error, because rustc is 1.83.0:
+
+```
+feature `edition2024` is required
+```
+
+`rustup toolchain install 1.90.0` then `cargo +1.90.0 check --manifest-path src-tauri/Cargo.toml` typechecks. `cargo +1.90.0 fmt --manifest-path src-tauri/Cargo.toml -- --check` passes. Installing `libgtk-3-dev` and `libwebkit2gtk-4.1-dev` still exits 1 on the `fuse3` `/etc/fuse.conf` prompt. Those -dev packages were configured anyway, and the 1.90 check then succeeded.

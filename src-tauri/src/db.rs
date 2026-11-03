@@ -324,6 +324,7 @@ pub fn search_filtered(
     match_query: Option<&str>,
     favorites_only: bool,
     hide_missing: bool,
+    tagged_only: bool,
 ) -> Result<Vec<ImageSummary>, String> {
     let sql = if match_query.is_some() {
         format!(
@@ -335,15 +336,17 @@ pub fn search_filtered(
              WHERE image_fts MATCH ?1
                AND (?2 = 0 OR i.favorite = 1)
                AND (?3 = 0 OR i.missing = 0)
+               AND (?4 = 0 OR EXISTS (SELECT 1 FROM image_tags it WHERE it.path = i.path))
              {order_sql}"
         )
     } else {
         format!(
-            "SELECT path, basename, folder, extension, size, mtime,
-                    favorite, display_name, missing
-             FROM images
-             WHERE (?1 = 0 OR favorite = 1)
-               AND (?2 = 0 OR missing = 0)
+            "SELECT i.path, i.basename, i.folder, i.extension, i.size, i.mtime,
+                    i.favorite, i.display_name, i.missing
+             FROM images i
+             WHERE (?1 = 0 OR i.favorite = 1)
+               AND (?2 = 0 OR i.missing = 0)
+               AND (?3 = 0 OR EXISTS (SELECT 1 FROM image_tags it WHERE it.path = i.path))
              {order_sql}"
         )
     };
@@ -351,13 +354,14 @@ pub fn search_filtered(
     let mut stmt = conn.prepare(&sql).map_err(err)?;
     let favorites = if favorites_only { 1 } else { 0 };
     let hide = if hide_missing { 1 } else { 0 };
+    let tagged = if tagged_only { 1 } else { 0 };
     let rows = if let Some(query) = match_query {
-        stmt.query_map(params![query, favorites, hide], map_summary)
+        stmt.query_map(params![query, favorites, hide, tagged], map_summary)
             .map_err(err)?
             .collect::<Result<Vec<_>, _>>()
             .map_err(err)?
     } else {
-        stmt.query_map(params![favorites, hide], map_summary)
+        stmt.query_map(params![favorites, hide, tagged], map_summary)
             .map_err(err)?
             .collect::<Result<Vec<_>, _>>()
             .map_err(err)?

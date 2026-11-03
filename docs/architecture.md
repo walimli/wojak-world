@@ -38,9 +38,9 @@ A real filesystem rename or move does not auto-carry that metadata. The new loca
 SQLite file: `library.sqlite` in Tauri app-local data. Migration is `PRAGMA user_version` 1 in `src-tauri/src/db.rs`.
 
 - `images`: `path` primary key, `basename`, `folder`, `extension`, `size`, `mtime`, `favorite`, `display_name`, `missing`, `indexed_at`.
-- `tags` and `image_tags`: ordinary tables. Tags are not stored only inside the image row.
+- `tags` and `image_tags`: ordinary tables. Tags are not stored only inside the image row. Tagged only matches a path that has at least one `image_tags` row. Derived filename categories stay in `image_categories` and do not satisfy that filter.
 - `image_tokens` and `image_categories`: derived filename tokens, filename phrases, and the parent folder name. They are search input. This cut has no separate taxonomy editor. The detail pane shows categories as read-only suggested text.
-- `image_search` plus FTS5 `image_fts` over basename, derived tokens, tags, and `display_name`. Tags remain the normal tables above. FTS is the search index, not the source of truth for tags. `display_name` is indexed so a renamed image can be found.
+- `image_search` plus FTS5 `image_fts` over basename, derived tokens, tags, and `display_name`. Tags remain the normal tables above. FTS is the search index, not the source of truth for tags. `display_name` is indexed so a renamed image can be found. The query tokenizer still AND-s every token. It does not parse AND, OR, NOT, or quotes as operators.
 - `thumbnails`: cache file name, pixel size, and the source `mtime` and `size` the file was built from.
 - `settings`: `roots` JSON and `setup_complete`.
 
@@ -97,10 +97,20 @@ The body layout is a search and filter toolbar at the top, then a scrollable thu
 ### Toolbar
 
 - Search box
+- Search button
 - Favorites-only toggle
+- Tagged-only toggle
 - Hide-missing toggle
 - Refresh
 - Settings, for the library roots override
+
+The search box holds a draft. Search runs when the user clicks Search or presses Enter in the box. Typing does not search by itself.
+
+Favorites only, Tagged only, and Hide missing each run that search again with the submitted text. The ready screen runs one search on load: empty text, Hide missing checked, Favorites only and Tagged only unchecked. Refresh indexes, then runs the same search with the submitted text and the current checkboxes. Busy disables the toolbar controls.
+
+Tagged only keeps rows with at least one manual tag in `image_tags`. Filename tokens and suggested categories do not count. Clearing the last manual tag on the selected image while Tagged only is on removes that image from the grid and clears the selection.
+
+Submitted text still uses the existing FTS index over basename, derived tokens, manual tags, and `display_name`. The tokenizer AND-s every token. This cut does not parse AND, OR, NOT, or quotes as operators.
 
 Hide-missing is the show-or-hide choice in Missing files. It starts checked. Refresh is the explicit owner Refresh in Scan policy. This cut's import is Refresh after the roots are saved. There is no second import command and no folder watcher.
 
@@ -115,9 +125,9 @@ Hide-missing is the show-or-hide choice in Missing files. It starts checked. Ref
 
 - `src/` Preact UI. `styles.css` is only the grid, the panes, and the full-frame layout. Chrome classes come from the `98.css` package.
 - `src-tauri/src/lib.rs` Tauri setup, the `wojak` scheme, and commands.
-- `src-tauri/src/db.rs` schema, migration, favorites, tags, and `display_name`.
+- `src-tauri/src/db.rs` schema, migration, favorites, tags, `display_name`, and filtered search.
 - `src-tauri/src/scan.rs` setup index and Refresh. Read-only on the library.
-- `src-tauri/src/search.rs` FTS query.
+- `src-tauri/src/search.rs` FTS query, plus the favorites, tagged, and missing filters.
 - `src-tauri/src/tokens.rs` filename tokens and suggested categories.
 - `src-tauri/src/thumbs.rs` JPEG thumbs in app-local data.
 - `src-tauri/capabilities/default.json` window permissions for Minimize, Maximize/Restore, Close, and dragging the title bar.
