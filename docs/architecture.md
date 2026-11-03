@@ -40,11 +40,28 @@ SQLite file: `library.sqlite` in Tauri app-local data. Migration is `PRAGMA user
 - `images`: `path` primary key, `basename`, `folder`, `extension`, `size`, `mtime`, `favorite`, `display_name`, `missing`, `indexed_at`.
 - `tags` and `image_tags`: ordinary tables. Tags are not stored only inside the image row. Tagged only matches a path that has at least one `image_tags` row. Derived filename categories stay in `image_categories` and do not satisfy that filter.
 - `image_tokens` and `image_categories`: derived filename tokens, filename phrases, and the parent folder name. They are search input. This cut has no separate taxonomy editor. The detail pane shows categories as read-only suggested text.
-- `image_search` plus FTS5 `image_fts` over basename, derived tokens, tags, and `display_name`. Tags remain the normal tables above. FTS is the search index, not the source of truth for tags. `display_name` is indexed so a renamed image can be found. The query tokenizer still AND-s every token. It does not parse AND, OR, NOT, or quotes as operators.
+- `image_search` plus FTS5 `image_fts` over basename, derived tokens, tags, and `display_name`. Tags remain the normal tables above. FTS is the search index, not the source of truth for tags. `display_name` is indexed so a renamed image can be found. The search box builds the `MATCH` expression. See Search.
 - `thumbnails`: cache file name, pixel size, and the source `mtime` and `size` the file was built from.
 - `settings`: `roots` JSON and `setup_complete`.
 
 Thumbnail files are `{sha256 of path}.jpg` under `thumbs/` in that same app-local directory.
+
+## Search
+
+Submitted search text is parsed into an FTS5 `MATCH` expression. The typed text is not passed through to SQLite.
+
+An empty submission matches every indexed image the filters allow. Text that normalizes to no words matches nothing. Any other submission is a query:
+
+- A word is a prefix term. `doomer` matches a token that starts with `doomer`.
+- Words separated by space mean AND. The word `AND` means the same thing. A single non-digit letter is still ignored, as it was before operators.
+- `OR` combines alternatives. `NOT` excludes the part on its right, as in `doomer NOT npc`. A leading `NOT` is rejected. `AND`, `OR`, and `NOT` ignore case.
+- A quoted phrase matches those words in order. It does not add a prefix wildcard.
+- Parentheses group the expression.
+- An incomplete or unbalanced query does not run. A message dialog shows a short explanation. Database and FTS error text stays off that dialog.
+
+Favorites only, Tagged only, and Hide missing sit beside the box. They are filters, not words in the query. The box is a draft until Search or Enter.
+
+Search reads basename, filename tokens, tags, and display name. Building the query does not change filename token indexing.
 
 ## Scan policy
 
@@ -98,6 +115,7 @@ The body layout is a search and filter toolbar at the top, then a scrollable thu
 
 - Search box
 - Search button
+- Search help (`?`), listing AND, OR, NOT, phrases, and groups
 - Favorites-only toggle
 - Tagged-only toggle
 - Hide-missing toggle
@@ -110,7 +128,7 @@ Favorites only, Tagged only, and Hide missing each run that search again with th
 
 Tagged only keeps rows with at least one manual tag in `image_tags`. Filename tokens and suggested categories do not count. Clearing the last manual tag on the selected image while Tagged only is on removes that image from the grid and clears the selection.
 
-Submitted text still uses the existing FTS index over basename, derived tokens, manual tags, and `display_name`. The tokenizer AND-s every token. This cut does not parse AND, OR, NOT, or quotes as operators.
+Submitted text searches basename, filename tokens, manual tags, and `display_name`. The query language is in Search above.
 
 Hide-missing is the show-or-hide choice in Missing files. It starts checked. Refresh is the explicit owner Refresh in Scan policy. This cut's import is Refresh after the roots are saved. There is no second import command and no folder watcher.
 
@@ -127,8 +145,8 @@ Hide-missing is the show-or-hide choice in Missing files. It starts checked. Ref
 - `src-tauri/src/lib.rs` Tauri setup, the `wojak` scheme, and commands.
 - `src-tauri/src/db.rs` schema, migration, favorites, tags, `display_name`, and filtered search.
 - `src-tauri/src/scan.rs` setup index and Refresh. Read-only on the library.
-- `src-tauri/src/search.rs` FTS query, plus the favorites, tagged, and missing filters.
-- `src-tauri/src/tokens.rs` filename tokens and suggested categories.
+- `src-tauri/src/search.rs` runs the search-box query, then the favorites, tagged, and missing filters.
+- `src-tauri/src/tokens.rs` filename tokens, suggested categories, and the search-box builder.
 - `src-tauri/src/thumbs.rs` JPEG thumbs in app-local data.
 - `src-tauri/capabilities/default.json` window permissions for Minimize, Maximize/Restore, Close, and dragging the title bar.
 

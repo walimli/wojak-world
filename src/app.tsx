@@ -12,7 +12,7 @@ import {
   setTags,
 } from "./api";
 import { Detail } from "./components/Detail";
-import { MessageDialog, SettingsDialog } from "./components/Dialogs";
+import { MessageDialog, SearchHelpDialog, SettingsDialog } from "./components/Dialogs";
 import { Grid } from "./components/Grid";
 import { SetupPanel } from "./components/SetupPanel";
 import { StatusBar } from "./components/StatusBar";
@@ -45,6 +45,7 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const request = useRef(0);
 
   useEffect(() => {
@@ -250,6 +251,7 @@ export function App() {
                 void onRefresh();
               }}
               onSettings={() => setSettingsOpen(true)}
+              onHelp={() => setHelpOpen(true)}
             />
             <div class="browser">
               <Grid
@@ -292,6 +294,7 @@ export function App() {
           }}
         />
       )}
+      {helpOpen && <SearchHelpDialog onClose={() => setHelpOpen(false)} />}
       {message && <MessageDialog message={message} onClose={() => setMessage(null)} />}
     </div>
   );

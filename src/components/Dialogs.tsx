@@ -1,5 +1,36 @@
 import { useState } from "preact/hooks";
 
+export function SearchHelpDialog(props: { onClose: () => void }) {
+  return (
+    <div class="modal-backdrop">
+      <div class="window dialog" role="dialog" aria-label="Search help">
+        <div class="title-bar">
+          <div class="title-bar-text">Search</div>
+        </div>
+        <div class="window-body">
+          <p>A word matches the start of a token. Space means AND. Operators ignore case.</p>
+          <ul class="search-help-list">
+            <li>AND: doomer soy</li>
+            <li>OR: doomer OR soyjak</li>
+            <li>NOT: doomer NOT npc</li>
+            <li>Phrase: "coomer wojak"</li>
+            <li>Group: (doomer OR soy) NOT npc</li>
+          </ul>
+          <p>
+            Search covers basename, filename tokens, tags, and display name. Favorites only, Tagged
+            only, and Hide missing stay outside the text query.
+          </p>
+          <section class="field-row dialog-actions">
+            <button type="button" onClick={props.onClose}>
+              OK
+            </button>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function MessageDialog(props: { message: string; onClose: () => void }) {
   return (
     <div class="modal-backdrop">

@@ -12,7 +12,7 @@ pub fn search(
     tagged_only: bool,
 ) -> Result<SearchResponse, String> {
     let (total, favorites) = db::counts(conn)?;
-    let items = match tokens::fts_query(query) {
+    let items = match tokens::fts_query(query)? {
         FtsQuery::All => db::search_filtered(
             conn,
             "ORDER BY i.basename COLLATE NOCASE, i.path",
@@ -29,7 +29,8 @@ pub fn search(
             favorites_only,
             hide_missing,
             tagged_only,
-        )?,
+        )
+        .map_err(plain_match_error)?,
     };
     let visible = items.len() as u64;
     Ok(SearchResponse {
@@ -38,4 +39,14 @@ pub fn search(
         total,
         favorites,
     })
+}
+
+fn plain_match_error(error: String) -> String {
+    let lower = error.to_ascii_lowercase();
+    if lower.contains("fts5") || lower.contains("syntax error") || lower.contains("malformed match")
+    {
+        "The search could not be read. Check the operators, quotes, and parentheses.".into()
+    } else {
+        error
+    }
 }

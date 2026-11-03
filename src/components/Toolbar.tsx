@@ -11,6 +11,7 @@ export function Toolbar(props: {
   onHideMissing: (value: boolean) => void;
   onRefresh: () => void;
   onSettings: () => void;
+  onHelp: () => void;
 }) {
   return (
     <div class="field-row toolbar">
@@ -31,6 +32,15 @@ export function Toolbar(props: {
       />
       <button type="button" disabled={props.busy} onClick={props.onSearch}>
         Search
+      </button>
+      <button
+        type="button"
+        aria-label="Search help"
+        title="Search help"
+        disabled={props.busy}
+        onClick={props.onHelp}
+      >
+        ?
       </button>
       <input
         id="favorites-only"

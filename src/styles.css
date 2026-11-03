@@ -207,6 +207,15 @@ body {
   margin-top: 0;
 }
 
+.search-help-list {
+  margin: 8px 0 12px;
+  padding-left: 18px;
+}
+
+.search-help-list li + li {
+  margin-top: 4px;
+}
+
 .setup {
   max-width: 560px;
 }
