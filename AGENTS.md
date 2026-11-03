@@ -20,6 +20,8 @@ Always build toward the mature end state. Small requested edits stay small. A la
 
 For a new task: investigate, discuss findings with the owner, write an implementation plan, and begin coding only when the owner confirms the plan. Every implementation plan lists existing files expected to change and files expected to be created, or explicitly states none.
 
+After the owner confirms a plan, land that confirmed change on main directly. No pull request unless the owner asks for one or explicitly wants review isolation.
+
 ## Verification
 
 The owner verifies all UI/UX. Do not launch the app, smoke-test visuals, or browser-automate unless explicitly asked.
@@ -42,7 +44,7 @@ If an expected command fails, diagnose why. Do not jump to workarounds. Record t
 - Keep change cost proportional to the trigger.
 - Inspect mounted code before editing. Do not guess.
 - No tests unless asked.
-- No commit, push, or history rewrite unless asked.
+- Do not commit or push until the owner confirms the plan. Once confirmed, push and land that confirmed change on main. No history rewrite unless asked. No unsolicited commits.
 - Ask before destructive cleanup, broad moves, deletions, or schema or user-data impact.
 - Spoken owner instruction beats older docs when they conflict.
 - Prefer small targeted edits. Do not invent process etiquette docs.
